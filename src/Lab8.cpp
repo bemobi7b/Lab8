@@ -32,7 +32,7 @@ SYSTEM_THREAD(ENABLED);
 uint16_t test = 0;
 
 bool buttonPressedAB = false; // false shows the proximity results and LEDs to turn on and true shows the light level to be displayed
-bool blynkOrDisplay = true;  // false shows on the display and true shows on the blynk dashboard
+bool blynkOrDisplay = true;   // false shows on the display and true shows on the blynk dashboard
 
 void setup()
 {
@@ -42,10 +42,12 @@ void setup()
     display.setup();
     display.setTextColor(WHITE);
     display.setTextSize(1);
-    display.setCursor(0,0);
+    display.setCursor(0, 0);
+    display.clearDisplay();
+    display.display();
 
-    while(!Serial.isConnected()){
-
+    while (!Serial.isConnected())
+    {
     }
 
     Wire.begin();
@@ -67,49 +69,57 @@ void setup()
 }
 void loop()
 {
-    Serial.println("Hello World");
-    Serial.println(test);
-    test++;
+    // Serial.println("Hello World");
+    // Serial.println(test);
+
+    // test++;
     display.loop();
     Blynk.run();
+
     display.clearDisplay();
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setCursor(0, 0);
-    // digitalWrite(SENSED_FAR_PIN, HIGH);
-    // digitalWrite(SENSED_MEDIUM_PIN, HIGH);
-    // digitalWrite(SENSED_CLOSE_PIN, HIGH);
+    display.display();
 
     checkButtons();
 
     if (buttonPressedAB && blynkOrDisplay)
     {
-        //light is being shown on Blynk
+        Serial.println("Blynk Light");
+        // light is being shown on Blynk
         Blynk.virtualWrite(VIRTUAL_LIGHT, proximitySensor.getAmbient());
+        digitalWrite(SENSED_FAR_PIN, LOW);
+        digitalWrite(SENSED_MEDIUM_PIN, LOW);
+        digitalWrite(SENSED_CLOSE_PIN, LOW);
     }
     if (!buttonPressedAB && blynkOrDisplay)
     {
-        //proximity is being shown on Blynk
+        Serial.println("Blynk Prox");
+        // proximity is being shown on Blynk
         Blynk.virtualWrite(VIRTUAL_PROX, proximitySensor.getProximity());
-        // flashLED();
+        flashLED();
     }
     if (buttonPressedAB && !blynkOrDisplay)
     {
-        //light is being shown on the OLED
+        Serial.println("OLED Light");
+        // light is being shown on the OLED
         display.println(proximitySensor.getAmbient());
         display.display();
+        digitalWrite(SENSED_FAR_PIN, LOW);
+        digitalWrite(SENSED_MEDIUM_PIN, LOW);
+        digitalWrite(SENSED_CLOSE_PIN, LOW);
     }
     if (!buttonPressedAB && !blynkOrDisplay)
     {
-        //proximity is being shown on the OLED
+        Serial.println("OLED Prox");
+        // proximity is being shown on the OLED
         display.println(proximitySensor.getProximity());
         display.display();
-        // flashLED();
+        flashLED();
     }
-    Serial.println(proximitySensor.getProximity());
-    Serial.println(proximitySensor.getAmbient());
-    
-
+    // Serial.println(proximitySensor.getProximity());
+    // Serial.println(proximitySensor.getAmbient());
 }
 
 void checkButtons()
@@ -128,6 +138,24 @@ void checkButtons()
     }
 }
 
-void flashLED(){
-
+void flashLED()
+{
+    if (proximitySensor.getProximity() < 50)
+    {
+        digitalWrite(SENSED_FAR_PIN, HIGH);
+        digitalWrite(SENSED_MEDIUM_PIN, LOW);
+        digitalWrite(SENSED_CLOSE_PIN, LOW);
+    }
+    else if (proximitySensor.getProximity() < 400)
+    {
+        digitalWrite(SENSED_MEDIUM_PIN, HIGH);
+        digitalWrite(SENSED_FAR_PIN, LOW);
+        digitalWrite(SENSED_CLOSE_PIN, LOW);
+    }
+    else
+    {
+        digitalWrite(SENSED_CLOSE_PIN, HIGH);
+        digitalWrite(SENSED_FAR_PIN, LOW);
+        digitalWrite(SENSED_MEDIUM_PIN, LOW);
+    }
 }
